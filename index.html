@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Manager - Your Money Tracker</title>
+    <!-- Font Awesome CDN -->
+    <script src="https://kit.fontawesome.com/e33ac630af.js" crossorigin="anonymous"></script>
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="mx-10 bg-gray-100">
+    <header>
+        <nav class="bg-purple-500 p-6 rounded-lg shadow-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <img src="./ex.png" alt="Expense Manager Logo" class="w-12 h-12 rounded-lg mr-4" />
+                    <h1 class="text-white text-3xl font-bold">Expense Manager</h1>
+                </div>
+                <div>
+                    <span class="text-white text-lg font-bold">Balance: <span id="balance">10000</span> TK</span>
+                </div>
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+                        <div>
+                            <img class="w-full rounded-lg" alt="Tailwind CSS Navbar component" src="./ex.png" />
+                        </div>
+                    </div>
+                    <ul tabindex="0"
+                        class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
+                        <li>
+                            <a class="justify-between">
+                                Profile
+                                <span class="badge">New</span>
+                            </a>
+                        </li>
+                        <li><a>Settings</a></li>
+                        <li><a>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="input-section" class="border border-purple-600 rounded-md bg-white p-5 my-5 shadow-md">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input id="income-field" type="number" placeholder="Income Amount" class="input input-bordered input-success w-full" />
+                <select id="income-category-field" class="select select-bordered w-full">
+                    <option disabled selected>Select Income Category</option>
+                    <option>Salary</option>
+                    <option>Bonus</option>
+                    <option>Investment</option>
+                    <option>Freelance</option>
+                    <option>Other</option>
+                </select>
+                <button id="income-btn" class="btn btn-outline btn-success w-full">Add Income</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <input id="expense-field" type="number" placeholder="Expense Amount"
+                    class="input input-bordered input-error w-full" />
+                <select id="expense-category-field" class="select select-bordered w-full">
+                    <option disabled selected>Select Expense Category</option>
+                    <option>Food</option>
+                    <option>Transport</option>
+                    <option>Utilities</option>
+                    <option>Entertainment</option>
+                    <option>Other</option>
+                </select>
+                <button id="exp-btn" class="btn btn-outline btn-error w-full">Add Expense</button>
+            </div>
+        </section>
+
+        <section id="table-section" class="border border-purple-600 rounded-md bg-white p-5 shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Transactions</h2>
+                <select id="filter-field" class="select select-bordered">
+                    <option value="all">Show All</option>
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                </select>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Balance</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-list">
+                        <!-- Transactions will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center py-4">
+        <p>&copy; 2024 Expense Manager - Your Money Tracker</p>
+    </footer>
+
+    <script>
+        let balance = 10000;
+        const balanceDisplay = document.getElementById('balance');
+        const incomeField = document.getElementById('income-field');
+        const incomeCategoryField = document.getElementById('income-category-field');
+        const expenseField = document.getElementById('expense-field');
+        const expenseCategoryField = document.getElementById('expense-category-field');
+        const incomeBtn = document.getElementById('income-btn');
+        const expenseBtn = document.getElementById('exp-btn');
+        const transactionList = document.getElementById('transaction-list');
+        const filterField = document.getElementById('filter-field');
+
+        function updateBalanceDisplay() {
+            balanceDisplay.textContent = balance + " TK";
+        }
+
+        function addTransaction(type, amount, category = '') {
+            const date = new Date().toLocaleDateString();
+            const transaction = { date, type, amount, category, currentBalance: balance };
+            appendTransactionRow(transaction);
+            saveToLocalStorage(transaction);
+        }
+
+        function appendTransactionRow({ date, type, amount, category, currentBalance }) {
+            const newRow = document.createElement('tr');
+
+            newRow.innerHTML = `
+                <td>${date}</td>
+                <td>${type}</td>
+                <td>${amount} TK</td>
+                <td>${category || '-'}</td>
+                <td>${currentBalance} TK</td>
+                <td>
+                    <button class="btn btn-outline btn-sm btn-warning" onclick="editTransaction(this)">Edit</button>
+                    <button class="btn btn-outline btn-sm btn-error" onclick="deleteTransaction(this)">Delete</button>
+                </td>
+            `;
+
+            transactionList.appendChild(newRow);
+        }
+
+        function saveToLocalStorage(transaction) {
+            const transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+            transactions.push(transaction);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+
+        function loadTransactions() {
+            const transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+            transactions.forEach(transaction => {
+                appendTransactionRow(transaction);
+            });
+        }
+
+        function editTransaction(button) {
+            const row = button.closest('tr');
+            const amount = row.children[2].textContent.replace(' TK', '');
+            const category = row.children[3].textContent;
+            const type = row.children[1].textContent;
+
+            if (type === 'Income') {
+                incomeField.value = amount;
+                incomeCategoryField.value = category;
+            } else {
+                expenseField.value = amount;
+                expenseCategoryField.value = category;
+            }
+
+            deleteTransaction(button); // Remove the old row
+        }
+
+        function deleteTransaction(button) {
+            const row = button.closest('tr');
+            const amount = parseFloat(row.children[2].textContent.replace(' TK', ''));
+            const type = row.children[1].textContent;
+
+            if (type === 'Income') {
+                balance -= amount;
+            } else {
+                balance += amount;
+            }
+
+            updateBalanceDisplay();
+            removeFromLocalStorage(row.children[0].textContent, amount, type);
+            row.remove();
+        }
+
+        function removeFromLocalStorage(date, amount, type) {
+            let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+            transactions = transactions.filter(transaction =>
+                !(transaction.date === date && transaction.amount == amount && transaction.type === type)
+            );
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+
+        function filterTransactions(type) {
+            const rows = document.querySelectorAll('#transaction-list tr');
+            rows.forEach(row => {
+                const transactionType = row.children[1].textContent.toLowerCase();
+                if (type === 'all' || transactionType === type) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        incomeBtn.addEventListener('click', () => {
+            const amount = parseFloat(incomeField.value);
+            const category = incomeCategoryField.value;
+
+            if (!isNaN(amount) && amount > 0 && category !== "Select Income Category") {
+                balance += amount;
+                addTransaction('Income', amount, category);
+                updateBalanceDisplay();
+                incomeField.value = '';
+                incomeCategoryField.value = 'Select Income Category';
+            } else {
+                alert('Please enter a valid income and select a category');
+            }
+        });
+
+        expenseBtn.addEventListener('click', () => {
+            const amount = parseFloat(expenseField.value);
+            const category = expenseCategoryField.value;
+
+            if (!isNaN(amount) && amount > 0 && category !== "Select Expense Category") {
+                balance -= amount;
+                addTransaction('Expense', amount, category);
+                updateBalanceDisplay();
+                expenseField.value = '';
+                expenseCategoryField.value = 'Select Expense Category';
+            } else {
+                alert('Please enter a valid expense and select a category');
+            }
+        });
+
+        filterField.addEventListener('change', () => {
+            const filterType = filterField.value;
+            filterTransactions(filterType);
+        });
+
+        // Load transactions on page load
+        window.onload = loadTransactions;
+    </script>
+</body>
+
+</html>
